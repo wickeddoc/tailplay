@@ -1,0 +1,153 @@
+{% load static %}
+{% load django_htmx %}
+{% load tailwind_cli %}
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:200,300,400,700,800" rel="stylesheet">
+    <script src="{% static 'htmx.js' %}" defer></script>
+    {% django_htmx_script %}
+  {% tailwind_css %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<div>
+  <div class="h-screen flex flex-col bg-gray-900 text-white">
+    <!-- header -->
+    <header class="flex flex-row p-4 h-24 bg-gray-800">
+      <div class="basis-1/5">Logo</div>
+      <div class="basis-3/5">
+          <input name="search" id="search" label="Search" class="p-1.5 border-gray-400 border-2 rounded-md min-w-fit w-full text-gray-700" placeholder="Search..."/>
+      </div>
+      <div class="basis-1/5 text-right">{% component "profile" %}</div>
+    </header>
+    <section class="flex-grow flex flex-row overflow-hidden justify-center">
+      <!-- lhs -->
+      <aside class="flex-shrink-0 w-1/6 p-4 flex-col">
+        <div class="flex h-4/5">
+            <ul class="space-y-1 max-w-md list-inside p-2">
+                <li class="p-2">
+                    <a href="">
+                    <svg class="w-6 h-6 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Home</a></li>
+                <li class="p-2">
+                    <a href="">
+                    <svg class="w-6 h-6 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Latest Additions</a></li>
+                <li class="p-2">
+                    <a href="">
+                    <svg class="w-6 h-6 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    History</a></li>
+                <li class="p-2">
+                    <a href="">
+                    <svg class="w-6 h-6 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path></svg>
+                    Events</a></li>
+            </ul>
+        </div>
+        <div class="flex h-1/5">bottom</div>
+      </aside>
+      <!-- center -->
+      <div class="flex-1 flex flex-col bg-white">
+        <div class="border-b-2 m-2 pb-2 border-gray-200"></div>
+        <main class="flex-1 overflow-y-auto p-4 bg-indigo-200">
+          <div class="relative">
+            <div class="mb-64">Overflowing content</div>
+            <div class="mb-64">Overflowing content</div>
+            <div class="mb-64">Overflowing content</div>
+            <div class="mb-64">Overflowing content</div>
+            <div class="mb-64">Overflowing content</div>
+            <div class="mb-64">Overflowing content</div>
+          </div>
+        </main>
+      </div>
+      <!-- rhs -->
+      <aside class="flex-shrink-0 w-1/6 p-4" id="queue" hx-get="/queue" hx-trigger="my-queue-refresh">
+      </aside>
+    </section>
+    <!-- footer -->
+    <footer class="bg-gray-800 p-4 h-32">
+      Footer
+    </footer>
+  </div>
+</div>
+
+<script>
+
+var shortcut = {
+  // (A) SET SHORTCUT KEYS TO LISTEN TO
+  listen : null,
+  set : (listen) => {
+    // (A1) KEY SEQUENCE + FUNCTION TO RUN
+    shortcut.listen = listen;
+
+    // (A2) KEY PRESS LISTENERS
+    window.addEventListener("keydown", (evt) => {
+      shortcut.track(evt.key.toLowerCase(), true);
+    });
+    window.addEventListener("keyup", (evt) => {
+      shortcut.track(evt.key.toLowerCase(), false);
+    });
+  },
+
+  // (B) KEY PRESS SEQUENCE TRACKER
+  sequence : [],
+  track : (key, direction) => {
+    // (B1) PREVENT AUTO CLEANING
+    if (shortcut.junk != null) { clearTimeout(shortcut.junk); }
+
+    // (B2) KEY DOWN
+    if (direction) { if (!shortcut.sequence.includes(key)) {
+      shortcut.sequence.push(key);
+    }}
+
+    // (B3) KEY UP
+    else {
+      let idx = shortcut.sequence.indexOf(key);
+      if (idx != -1) { shortcut.sequence.splice(idx, 1); }
+    }
+
+    // (B4) HIT SHORTCUT?
+    if (shortcut.sequence.length != 0) {
+      let seq = shortcut.sequence.join("-");
+      if (shortcut.listen[seq]) {
+        shortcut.sequence = [];
+        shortcut.listen[seq]();
+      }
+      else {
+        shortcut.junk = setTimeout(shortcut.clean, 600)
+      }
+    }
+  },
+
+  // (C) AUTO CLEANUP
+  junk : null,
+  clean : () => {
+    shortcut.junk = null;
+    shortcut.sequence = [];
+  }
+};
+
+window.addEventListener("DOMContentLoaded", () => {
+  shortcut.set({
+    "f" : () => { document.getElementById("search").focus(); },
+  });
+});
+
+
+	const chatSocket = new WebSocket("ws://" + window.location.host + "/");
+	chatSocket.onopen = function (e) {
+		console.log("The connection was setup successfully !");
+	};
+	chatSocket.onclose = function (e) {
+		console.log("Something unexpected happened !");
+	};
+	chatSocket.onmessage = function (e) {
+		htmx.trigger("#queue", "my-queue-refresh");
+	};
+
+
+</script>
+
+</body>
+</html>
